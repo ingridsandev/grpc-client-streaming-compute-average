@@ -41,7 +41,7 @@ namespace client
                     });
                 }
                 
-            } while (key != esc);
+            } while (key.ToLower() != esc);
 
             await stream.RequestStream.CompleteAsync();
 
