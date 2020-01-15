@@ -9,22 +9,29 @@ namespace server
     {
         public override async Task<ComputeAverageResponse> ComputeAverage(IAsyncStreamReader<ComputeAverageRequest> requestStream, ServerCallContext context)
         {
-            var sum = 0.0;
-            var total = 0;
-
-            while (await requestStream.MoveNext())
+            try
             {
-                sum += requestStream.Current.Number;
-                total++;
+                var sum = 0.0;
+                var total = 0;
+
+                while (await requestStream.MoveNext())
+                {
+                    sum += requestStream.Current.Number;
+                    total++;
+                }
+
+                var avg = sum / total;
+
+                return new ComputeAverageResponse() {
+                    Result = avg,
+                    Total = total,
+                    FriendlyMessage = $"You typed {total} numbers and the average of these numbers are: {avg}"
+                };
             }
-
-            var avg = sum / total;
-
-            return new ComputeAverageResponse() {
-                Result = avg,
-                Total = total,
-                FriendlyMessage = $"You typed {total} numbers and the average of these numbers are: {avg}"
-            };
+            catch (System.Exception e)
+            {
+                throw new RpcException(new Status(StatusCode.Internal, $"Something went wrong - Exception: {e}"));
+            }
         }
     }
 }

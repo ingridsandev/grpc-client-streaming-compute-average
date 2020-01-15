@@ -12,45 +12,56 @@ namespace client
 
         static async Task Main(string[] args)
         {
-            Channel channel = new Channel(target, ChannelCredentials.Insecure);
-
-            await channel.ConnectAsync().ContinueWith((task) =>
+            try
             {
-                if (task.Status == TaskStatus.RanToCompletion)
-                    Console.WriteLine("The client connected successfully");
-            });
+                Channel channel = new Channel(target, ChannelCredentials.Insecure);
 
-            var client = new ComputeAverageService.ComputeAverageServiceClient(channel);
-
-            var stream = client.ComputeAverage();
-
-            string key;
-            
-            do
-            {
-                Console.WriteLine(Environment.NewLine + "Digit a number or type 'ESC' to exit");
-                key = Console.ReadLine();
-
-                var isNumeric = int.TryParse(key, out int number);
-
-                if (key.ToLower() != esc && isNumeric)
+                await channel.ConnectAsync().ContinueWith((task) =>
                 {
-                    await stream.RequestStream.WriteAsync(new ComputeAverageRequest()
-                    {
-                        Number = number
-                    });
-                }
+                    if (task.Status == TaskStatus.RanToCompletion)
+                        Console.WriteLine("The client connected successfully");
+                });
+
+                var client = new ComputeAverageService.ComputeAverageServiceClient(channel);
+
+                var stream = client.ComputeAverage();
+
+                string key;
                 
-            } while (key.ToLower() != esc);
+                do
+                {
+                    Console.WriteLine(Environment.NewLine + "Digit a number or type 'ESC' to exit");
+                    key = Console.ReadLine();
 
-            await stream.RequestStream.CompleteAsync();
+                    var isNumeric = int.TryParse(key, out int number);
 
-            var responseClientStream = await stream.ResponseAsync;
+                    if (key.ToLower() != esc && isNumeric)
+                    {
+                        await stream.RequestStream.WriteAsync(new ComputeAverageRequest()
+                        {
+                            Number = number
+                        });
+                    }
+                    
+                } while (key.ToLower() != esc);
 
-            Console.WriteLine(responseClientStream.ToString());
+                await stream.RequestStream.CompleteAsync();
 
-            channel.ShutdownAsync().Wait();
-            Console.ReadLine();
+                var responseClientStream = await stream.ResponseAsync;
+
+                Console.WriteLine(responseClientStream.ToString());
+
+                channel.ShutdownAsync().Wait();
+                Console.ReadLine();
+            }
+            catch (RpcException e)
+            {
+                Console.WriteLine($"StatusCode: {e.Status.StatusCode} | Detail: {e.Status.Detail}");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Something went wrong.");
+            }
         }
     }
 }
