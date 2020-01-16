@@ -1,6 +1,10 @@
 ﻿using ComputeAverage;
+using Google.Protobuf.Reflection;
 using Grpc.Core;
+using Grpc.Reflection;
+using Grpc.Reflection.V1Alpha;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace server
@@ -17,7 +21,11 @@ namespace server
             {
                 server = new Server()
                 {
-                    Services = { ComputeAverageService.BindService(new ComputeAverageServiceImplementation()) },
+                    Services = 
+                    { 
+                        ComputeAverageService.BindService(new ComputeAverageServiceImplementation()),
+                        ServerReflection.BindService(new ReflectionServiceImpl(new List<ServiceDescriptor>() { ComputeAverageService.Descriptor }))
+                    },
                     Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
                 };
 
